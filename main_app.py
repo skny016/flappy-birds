@@ -23,6 +23,7 @@ vel = 0
 scroll_speed = 2
 flying = False
 game_over = False
+game_start = False
 pipe_gap = 150
 pipe_appear = 2000
 last_pipe = pygame.time.get_ticks() - pipe_appear
@@ -34,7 +35,8 @@ pass_pipe = False
 bg = pygame.image.load("img/bg.png")
 ground = pygame.image.load("img/ground.png")
 pygame_icon = pygame.image.load('img/bird1.png')
-button_img = pygame.image.load('img/restart.png')
+restart_img = pygame.image.load('img/restart.png')
+start_img = pygame.image.load('img/start.png')
 
 
 # text
@@ -106,7 +108,11 @@ class bird(pygame.sprite.Sprite):
             self.image = pygame.transform.rotate(self.images[self.index], self.velocity * -3)
         
         if game_over == True:
-            self.image = pygame.transform.rotate(self.images[self.index], -100)
+            self.image = pygame.transform.rotate(self.images[self.index], -30)
+            pygame.time.delay(2)
+            self.image = pygame.transform.rotate(self.images[self.index], -60)
+            pygame.time.delay(2)
+                
         if game_over == False and pygame.mouse.get_pressed()[0] == 1:
             self.image = pygame.transform.rotate(self.images[self.index], 0)
 
@@ -127,11 +133,40 @@ class pipe(pygame.sprite.Sprite):
             if self.rect.right < 0:
                 self.kill()
 
-class button():
+class start_button():
     def __init__(self, x, y, image):
         self.image = image
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
+        
+    def draw(self):
+        press = False
+    
+        # get mouse position
+        MosPos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(MosPos):
+            if pygame.mouse.get_pressed()[0] == 1:
+                press = True
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+        return press
+
+class restart_button():
+    def __init__(self, x, y, image):
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+    def draw(self):
+        press = False
+    
+        # get mouse position
+        MosPos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(MosPos):
+            if pygame.mouse.get_pressed()[0] == 1:
+                press = True
+    
+        # make button 
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+        return press
 
     def draw(self):
         press = False
@@ -153,8 +188,9 @@ pipe_group = pygame.sprite.Group()
 flappy = bird(100, int(screen_height / 2))
 bird_group.add(flappy)
 
-# button restart
-button_res = button((screen_width - 120) / 2, ((screen_height - 42) // 2 ), button_img)
+# button start restart
+button_start = start_button((screen_width - 120) / 2, ((screen_height - 180) // 2 ), start_img)
+button_res = restart_button((screen_width - 120) / 2, ((screen_height - 100) // 2 ), restart_img)
 
 ISRUN = True
 while ISRUN:
@@ -187,7 +223,6 @@ while ISRUN:
     # text in screen
         # score in screen
     text(str(score), font, color, int(screen_width / 2), 10)
-        # leaderboard 
 
     # check collission
     if pygame.sprite.groupcollide(bird_group,pipe_group, False, False):
@@ -216,18 +251,20 @@ while ISRUN:
         game_over = True
         flying = False
 
+    if game_over == False and game_start == False:
+        if button_start.draw() == True:
+            game_start = True
+
     if game_over == True:
         if button_res.draw() == True:
             game_over = False
+            game_start = False
             score = sys_reset()
-            print("clicked")
-
-        
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             ISRUN = False
-        if event.type == pygame.MOUSEBUTTONDOWN and flying == False:
+        if game_over == False and pygame.MOUSEBUTTONDOWN and game_start == True:
             flying = True
         if game_over ==True:
             flying = False
